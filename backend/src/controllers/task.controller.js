@@ -43,8 +43,8 @@ exports.createTask = async (req, res) => {
       });
     }
 
-    // 4️⃣ assignedUser must be valid ObjectId
-    if (assignedUser && !mongoose.Types.ObjectId.isValid(assignedUser)) {
+    // 4️⃣ assignedUser must be valid ObjectId (if provided and not empty)
+    if (assignedUser && assignedUser.trim() && !mongoose.Types.ObjectId.isValid(assignedUser)) {
       return res.status(400).json({
         message: 'Invalid assignedUser ID'
       });
@@ -64,21 +64,27 @@ exports.createTask = async (req, res) => {
     }
 
     // 6️⃣ Role-based rule: Only Admin / Manager can assign users
-    if (assignedUser && !['Admin', 'Manager'].includes(req.user.role)) {
+    if (assignedUser && assignedUser.trim() && !['Admin', 'Manager'].includes(req.user.role)) {
       return res.status(403).json({
         message: 'Only Admin or Manager can assign tasks'
       });
     }
 
-    // 7️⃣ Create task
-    const task = await Task.create({
+    // 7️⃣ Create task (filter out empty assignedUser)
+    const taskData = {
       title,
       description,
       priority,
       status,
-      assignedUser,
       dueDate
-    });
+    };
+    
+    // Only include assignedUser if it's a non-empty string
+    if (assignedUser && assignedUser.trim()) {
+      taskData.assignedUser = assignedUser;
+    }
+
+    const task = await Task.create(taskData);
 
     // 8️⃣ Emit real-time event
     req.io.emit('taskCreated', task);
@@ -139,8 +145,8 @@ exports.updateTask = async (req, res) => {
       return res.status(400).json({ message: 'Invalid priority value' });
     }
 
-    // 5️⃣ assignedUser validation (Admin / Manager only)
-    if (assignedUser) {
+    // 5️⃣ assignedUser validation (Admin / Manager only, only if provided and not empty)
+    if (assignedUser && assignedUser.trim()) {
       if (!['Admin', 'Manager'].includes(req.user.role)) {
         return res.status(403).json({
           message: 'Only Admin or Manager can reassign tasks'
@@ -161,8 +167,15 @@ exports.updateTask = async (req, res) => {
       return res.status(400).json({ message: 'Due date cannot be in the past' });
     }
 
-    // 7️⃣ Apply updates
-    Object.assign(task, req.body);
+    // 7️⃣ Apply updates (filter out empty assignedUser)
+    const updateData = { ...req.body };
+    
+    // Remove empty assignedUser
+    if (updateData.assignedUser === '' || (updateData.assignedUser && !updateData.assignedUser.trim())) {
+      delete updateData.assignedUser;
+    }
+    
+    Object.assign(task, updateData);
     await task.save();
 
     // 8️⃣ Emit real-time update
