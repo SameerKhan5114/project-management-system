@@ -1,0 +1,10 @@
+/* TaskCard specific styles already included in TaskList.css */
+/* This file is kept for modularity but most styles are in TaskList.css */
+
+.task-card-extended {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Additional animations and specific task card styling can go here */
