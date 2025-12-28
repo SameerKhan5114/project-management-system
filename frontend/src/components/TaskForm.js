@@ -10,7 +10,6 @@ const TaskForm = ({ token, onTaskCreated, onCancel, editingTask = null }) => {
     dueDate: '',
     assignedUser: ''
   });
-  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 

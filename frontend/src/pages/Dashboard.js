@@ -13,20 +13,6 @@ const Dashboard = () => {
   const [user, setUser] = useState(null);
   const token = localStorage.getItem('token');
 
-  useEffect(() => {
-    if (!token) {
-      navigate('/login');
-      return;
-    }
-
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      setUser(JSON.parse(userData));
-    }
-
-    fetchTasks();
-  }, [token, navigate]);
-
   const fetchTasks = async () => {
     try {
       const url = filterStatus 
@@ -47,6 +33,21 @@ const Dashboard = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      setUser(JSON.parse(userData));
+    }
+
+    fetchTasks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, navigate, filterStatus]);
 
   const handleTaskCreated = (newTask) => {
     setTasks([newTask, ...tasks]);
